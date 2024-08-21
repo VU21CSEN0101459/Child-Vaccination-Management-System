@@ -1,0 +1,99 @@
+import datetime
+import pickle
+import os
+USER_DATA_FILE = 'user_data.pkl'
+vaccination_schedules = {
+    '1': {'name': 'Hepatitis B', 'age': 'Birth'},
+    '2': {'name': 'DTP', 'age': '2 months'},
+    '3': {'name': 'Polio', 'age': '2 months'},
+    '4': {'name': 'MMR', 'age': '1 year'}
+}
+
+def load_user_data():
+    if os.path.exists(USER_DATA_FILE):
+        with open(USER_DATA_FILE, 'rb') as f:
+            return pickle.load(f)
+    return {'users': {}, 'records': {}}
+
+def save_user_data(data):
+    with open(USER_DATA_FILE, 'wb') as f:
+        pickle.dump(data, f)
+
+def register_user(user_data):
+    username = input("Enter username: ").strip()
+    if username in user_data['users']:
+        print("User already exists!")
+    else:
+        password = input("Enter password: ").strip()
+        user_data['users'][username] = password
+        user_data['records'][username] = []
+        save_user_data(user_data)
+        print("Registration successful!")
+
+def login_user(user_data):
+    username = input("Enter username: ").strip()
+    password = input("Enter password: ").strip()
+    if user_data['users'].get(username) == password:
+        return username
+    else:
+        print("Invalid credentials!")
+        return None
+
+def schedule_vaccination(username, user_data):
+    print("Available vaccinations:")
+    for key, value in vaccination_schedules.items():
+        print(f"{key}: {value['name']} - {value['age']}")
+    choice = input("Enter the vaccination number to schedule: ").strip()
+    if choice in vaccination_schedules:
+        vaccination = vaccination_schedules[choice]
+        date = datetime.datetime.now() + datetime.timedelta(days=30)  # Schedule for 30 days later
+        user_data['records'][username].append({'vaccination': vaccination['name'], 'date': date})
+        save_user_data(user_data)
+        print(f"Vaccination scheduled: {vaccination['name']} on {date.strftime('%Y-%m-%d')}")
+    else:
+        print("Invalid choice!")
+
+def view_records(username, user_data):
+    print("Your vaccination records:")
+    records = user_data['records'].get(username, [])
+    if not records:
+        print("No records found.")
+    for record in records:
+        print(f"Vaccination: {record['vaccination']} - Date: {record['date'].strftime('%Y-%m-%d')}")
+
+def main():
+    user_data = load_user_data()
+
+    while True:
+        print("\n1. Register")
+        print("2. Login")
+        print("3. Exit")
+        choice = input("Choose an option: ").strip()
+
+        if choice == '1':
+            register_user(user_data)
+        elif choice == '2':
+            username = login_user(user_data)
+            if username:
+                while True:
+                    print("\n1. Schedule Vaccination")
+                    print("2. View Records")
+                    print("3. Logout")
+                    action = input("Choose an action: ").strip()
+
+                    if action == '1':
+                        schedule_vaccination(username, user_data)
+                    elif action == '2':
+                        view_records(username, user_data)
+                    elif action == '3':
+                        break
+                    else:
+                        print("Invalid option!")
+        elif choice == '3':
+            print("Exiting...")
+            break
+        else:
+            print("Invalid option!")
+
+if __name__ == "__main__":
+    main()
